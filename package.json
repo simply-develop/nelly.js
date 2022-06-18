@@ -18,11 +18,12 @@
     "url": "https://github.com/simply-develop/nellyjs/issues"
   },
   "homepage": "https://github.com/simply-develop/nellyjs#readme",
-  "dependencies": {
-    "axios": "^0.27.2"
-  },
   "devDependencies": {
     "@types/node": "^18.0.0",
+    "@types/ws": "^8.5.3",
     "husky": "^8.0.1"
+  },
+  "dependencies": {
+    "socket.io": "^4.5.1"
   }
 }
