@@ -1,0 +1,28 @@
+{
+  "name": "clydejs",
+  "version": "1.0.0",
+  "description": "The future of discord wrapper made in Javascript",
+  "main": "lib/clyde.js",
+  "typings": "typings/clyde.d.ts",
+  "scripts": {
+    "prepare": "husky install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rahuletto",
+  "license": "CC BY-NC-ND 4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simply-develop/clydejs"
+  },
+  "bugs": {
+    "url": "https://github.com/simply-develop/clydejs/issues"
+  },
+  "homepage": "https://github.com/simply-develop/clydejs#readme",
+  "dependencies": {
+    "axios": "^0.27.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "husky": "^8.0.1"
+  }
+}

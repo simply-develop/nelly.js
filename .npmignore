@@ -1,0 +1,5 @@
+src
+clyde.ts
+.gitignore
+node_modules
+tsconfig.json
