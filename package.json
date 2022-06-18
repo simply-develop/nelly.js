@@ -1,9 +1,9 @@
 {
-  "name": "clydejs",
-  "version": "1.0.0",
+  "name": "nelly.js",
+  "version": "0.0.1",
   "description": "The future of discord wrapper made in Javascript",
-  "main": "lib/clyde.js",
-  "typings": "typings/clyde.d.ts",
+  "main": "lib/nelly.js",
+  "typings": "typings/nelly.d.ts",
   "scripts": {
     "prepare": "husky install",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,12 +12,12 @@
   "license": "CC BY-NC-ND 4.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/simply-develop/clydejs"
+    "url": "https://github.com/simply-develop/nellyjs"
   },
   "bugs": {
-    "url": "https://github.com/simply-develop/clydejs/issues"
+    "url": "https://github.com/simply-develop/nellyjs/issues"
   },
-  "homepage": "https://github.com/simply-develop/clydejs#readme",
+  "homepage": "https://github.com/simply-develop/nellyjs#readme",
   "dependencies": {
     "axios": "^0.27.2"
   },

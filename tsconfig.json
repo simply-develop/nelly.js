@@ -1,7 +1,7 @@
 {
-	"files": ["clyde.ts"],
+	"files": ["nelly.ts"],
 	"exclude": ["node_modules"],
-	"include": ["./src/**/*", "clyde.ts"],
+	"include": ["./src/**/*", "nelly.ts"],
 	"compilerOptions": {
 		"skipLibCheck": true,
 		"target": "es2016",
