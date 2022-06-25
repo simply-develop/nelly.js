@@ -8,16 +8,17 @@ export let oop = {
     });
   },
   [11]: function (data: any, shard: any, client: any) {
+
     shard.format({
       op: 2,
       d: {
         token: client.token,
-        intents: 516,
+        intents: client.intents || 512,
         shard: [shard.shard_id, client.shards.length],
         properties: {
           $os: "linux",
-          $browser: "Discord iOS",
-          $device: "discord.gblk",
+          $browser: `Discord ` + client.platform == "mobile" ? "iOS" : "Linux",
+          $device: `discord.${client.platform || "web"}`,
         },
       },
     });

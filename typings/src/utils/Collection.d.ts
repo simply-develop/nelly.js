@@ -1,11 +1,12 @@
+import { Client } from "../Client";
 declare type collectionObj = {
-    type?: 'User' | 'Guild' | 'Channel' | 'Emoji' | 'Other';
-    client?: any;
+    type?: "users" | "guilds" | "channels" | "emojis";
+    client?: Client;
 };
 export declare class Collection extends Map {
     fetchLinkType: string;
     _client: any;
-    constructor(arr: any[], options?: collectionObj);
+    constructor(arr: any[], options: collectionObj);
     get client(): any;
     get first(): any;
     get last(): any;

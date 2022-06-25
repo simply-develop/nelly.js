@@ -22,7 +22,7 @@ export declare class TextChannel extends BaseChannel {
     lastMsgId: any;
     pinTime: Date;
     constructor(obj: any, client: any);
-    send(text: string | object, options: msgSend): Promise<unknown>;
+    send(text: string | msgSend, options: msgSend): Promise<unknown>;
 }
 export declare class CategoryChannel extends BaseChannel {
     typeChannel: string;

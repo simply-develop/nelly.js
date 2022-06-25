@@ -1,84 +1,97 @@
-import typeData from './DataType'
+import { Client } from "../Client";
+import {
+  BaseChannel,
+  BaseGuild,
+  BaseMessage,
+  User,
+  Member,
+  TextChannel,
+  CategoryChannel,
+  Emoji,
+} from "./dataTypes";
+
+let typeData = {
+  BaseChannel,
+  BaseGuild,
+  BaseMessage,
+  User,
+  Member,
+  TextChannel,
+  CategoryChannel,
+  Emoji,
+};
+
+import enums from './enums'
 
 type collectionObj = {
-  type?: 'User' | 'Guild' | 'Channel' | 'Emoji' | 'Other'
-  client?: any
-}
+  type?: "users" | "guilds" | "channels" | "emojis";
+  client?: Client
+};
 
 export class Collection extends Map {
-    fetchLinkType: string;
-    _client: any;
+  fetchLinkType: string;
+  _client: any;
 
-    constructor(arr: any[], options: collectionObj = { type: 'Other'}) {
-        super();
-      this.fetchLinkType = options.type;
-      
-        Object.defineProperty(this, '_client', {
-            enumerable: false,
-            writable: false,
-            value: options.client
-        });
-    }
+  constructor(arr: any[], options: collectionObj) {
+    super();
+    this.fetchLinkType = options.type;
 
-    get client(): any {
-        return this._client;
-    }
+    Object.defineProperty(this, "_client", {
+      enumerable: false,
+      writable: false,
+      value: options.client,
+    });
+  }
 
-    get first() {
-        return this.array()[0];
-    }
-    get last() {
-        var ar = this.array();
-        return ar[ar.length - 1];
-    }
+  get client(): any {
+    return this._client;
+  }
 
-    array() {
-        return Array.from(this.values());
-    }
+  get first() {
+    return this.array()[0];
+  }
+  get last() {
+    var ar = this.array();
+    return ar[ar.length - 1];
+  }
 
-    find(fn = () => { }) {
-        return this.array().find(fn);
-    }
+  array() {
+    return Array.from(this.values());
+  }
 
-    map(fn = () => { }) {
-        return this.array().map(fn);
-    }
+  find(fn = () => {}) {
+    return this.array().find(fn);
+  }
 
-    fetch(id: any, type = 0) {
-        return new Promise((resolve, reject) => {
-            this.client
-                .apiRequest(
-                    `https://discord.com/api/v10/${this.fetchLinkType}/${id}`,
-                    'get'
-                )
-                .then((result: any) => {
-                    if (!result) return;
-                    const dataclass = this.client.create(this.fetchLinkType == 'Channel'
-                        ? type == 0
-                            ? typeData.TextChannel
-                            : typeData.CategoryChannel
-                        : typeData.User,
-                        result
-                    )
-                    if (!result.id) return;
-                    this.set(
-                        id.toString(),
-                        dataclass
-                    );
-                    return resolve(dataclass);
-                })
-                .catch(reject);
-        });
-    }
+  map(fn = () => {}) {
+    return this.array().map(fn);
+  }
+
+  fetch(id: any, type = 0) {
+    return new Promise((resolve, reject) => {
+      this.client
+        .apiRequest(
+          `https://discord.com/api/v10/${this.fetchLinkType}/${id}`,
+          "get"
+        )
+        .then((result: any) => {
+          if (!result) return;
+          const dataclass = this.client.create(
+            this.fetchLinkType == "channels"
+              ? type == 0
+                ? typeData.TextChannel
+                : typeData.CategoryChannel
+              : typeData.User,
+            result
+          );
+          if (!result.id) return;
+          this.set(id.toString(), dataclass);
+          return resolve(dataclass);
+        })
+        .catch(reject);
+    });
+  }
 }
-
-let channelTypes = [
-   "TextChannel",
-   "DMChannel",
-   "VoiceChannel",
-   "GroupDMChannel",
-   "CategoryChannel",
-];
 
 export class ChannelCollection extends Collection {
   fetch(id: string, type = 0) {
@@ -87,8 +100,8 @@ export class ChannelCollection extends Collection {
         .apiRequest(`https://discord.com/api/v10/channels/${id}`, "get")
         .then(async (result: any) => {
           if (!result || !result.id) return reject(result);
-          const dataclass = this.client.create(
-            channelTypes[result.type],
+          const dataclass = this.client.create(//@ts-ignore
+            typeData[enums.channelTypes[result.type as number]],
             result
           );
           if (result.parent_id) {
@@ -130,13 +143,9 @@ export class GuildCollection extends Collection {
         .apiRequest(`https://discord.com/api/v10/guilds/${id}`, "get")
         .then(async (result: any) => {
           if (!result || !result.id) return reject(result);
-          const dataclass = this.client.create(
-            typeData["BaseGuild"],
-            result,
-            {
-              EmojiCollection,
-            }
-          );
+          const dataclass = this.client.create(typeData["BaseGuild"], result, {
+            EmojiCollection,
+          });
 
           this.set(id.toString(), dataclass);
           return resolve(dataclass);

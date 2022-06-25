@@ -17,7 +17,7 @@ export class User extends String {
     this.discriminator = user.discriminator;
     this.bot = user.bot == true;
     this.avatar = user.avatar;
-    this.tag = user.tag;
+    this.tag = user.username + '#' + user.discriminator;
   }
 
   get mention() {
@@ -49,13 +49,13 @@ export class Member extends String {
 
   constructor(msg: any) {
     super(`${msg.author.username}#${msg.author.discriminator}`);
-    this.nickname = msg.member.nick;
+    this.nickname = msg.msg.member?.nick || msg.author.username;
     this.id = msg.author.id;
-    this.roles = msg.member.roles;
-    this.premium = msg.member.premium_since;
-    this.joinDate = new Date(msg.member.joined_at);
+    this.roles = msg.msg.member.roles;
+    this.premium = msg.msg.member.premium_since;
+    this.joinDate = new Date(msg.msg.member.joined_at);
     this.user = new User(msg.author);
-    this.guild = msg.member.guild
+    this.guild = msg.msg.member.guild
   }
 
   toString() {

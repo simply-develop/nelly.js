@@ -75,7 +75,7 @@ export class BaseGuild {
     this.features = obj.features;
     this.emojis = new Collection(
       obj.emojis.map((e: any) => [e.id, new Emoji(e)]),
-      { client, type: "Emoji" }
+      { client, type: "emojis" }
     );
     this.banner = obj.banner;
     this.ownerId = obj.owner_id;
@@ -101,4 +101,5 @@ export class BaseGuild {
     this.rulesChannelId = obj.rules_channel_id;
     this.publicUpdatesChannelId = obj.public_updates_channel_id;
   }
+  
 }

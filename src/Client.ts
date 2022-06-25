@@ -1,16 +1,32 @@
 import { EventEmitter } from "stream";
-import { shard } from './ws/shard';
-import { Collection } from "./utils/Collection";
-import fetch from './ws/ws'
+import { shard } from "./ws/shard";
+import {
+  Collection,
+  UserCollection,
+  GuildCollection,
+  ChannelCollection,
+} from "./utils/Collection";
+import fetch from "./ws/ws";
 import { User } from "./utils/dataTypes/User";
-import { oop } from './utils/interact'
+import { oop } from "./utils/interact";
+import { NellyError } from "./errors/error";
+import { rejects } from "assert";
 
-const base = "https://discord.com/api/v10/gateway/bot"
+const base = "https://discord.com/api/v10/gateway/bot";
 
 type clientOptions = {
+  platform?: "desktop" | "web" | "mobile";
+  intents?: number;
   token?: string;
-  versionGateway?: number
-}
+  versionGateway?: number;
+};
+
+type statusOpt = {
+  type?: string | number;
+  afk?: boolean;
+  platform?: "desktop" | "web" | "mobile";
+};
+/** The Client of WebSocket/Discord Bot */
 
 export class Client extends EventEmitter {
   public shards: any[];
@@ -18,9 +34,14 @@ export class Client extends EventEmitter {
   users: any;
   guilds: any;
   channels: any;
-  user: any;
-  _rawdata: any;
-  resumeTimes: any;
+  user: User;
+  protected _rawdata: any;
+  private resumeTimes: any;
+  private _session_start_limit: any;
+  readyTimestamp: number;
+  intents: number;
+  platform: string;
+  application: any;
 
   constructor(options: clientOptions = {}) {
     super();
@@ -35,29 +56,46 @@ export class Client extends EventEmitter {
       writable: false,
       value: options.versionGateway || 10,
     });
+    Object.defineProperty(this, "resumeTimes", {
+      enumerable: false,
+      writable: true,
+      value: 0,
+    });
 
     this.shards = [];
 
-    this.users = new Collection([], { type: "User", client: this });
-    this.guilds = new Collection([], { type: "Guild", client: this });
-    this.channels = new Collection([], { type: "Channel", client: this });
+    this.intents = options.intents;
+    this.platform = options.platform;
   }
 
-  get ping() {
+  public ping() {
     return (
       this.shards.reduce((a, b) => a.ping + b.ping, 0) / this.shards.length
     );
   }
 
-  login(token: string) {
-    if (typeof token == "string") this.token = token;
-    const nshard = new shard(
-      `wss://gateway.discord.gg/?v=10&encoding=json`,
-      this.shards.length,
-      this
-    );
+  public uptime() {
+    return this.readyTimestamp && Date.now() - this.readyTimestamp;
+  }
 
-    this.shards.push(nshard);
+  login(token: string) {
+    if (!token)
+      throw new NellyError(
+        "Please provide an token to start your Discord bot."
+      );
+
+    if (typeof token == "string")
+      this.token = token = token.replace(/^(Bot|Bearer)\s*/i, "");
+
+    try {
+      let nshard = new shard(
+        `wss://gateway.discord.gg/?v=10&encoding=json`,
+        this.shards.length,
+        this
+      );
+
+      this.shards.push(nshard);
+    } catch {}
   }
 
   interact(data: any, shard: string) {
@@ -65,7 +103,7 @@ export class Client extends EventEmitter {
 
     // @ts-ignore
     const method = oop[op];
-    if (!method) throw new TypeError(`ga ada handler op ${op}`);
+    if (!method) throw new TypeError(`Hander not found ${op}`);
 
     return method(data, shard, this);
   }
@@ -96,6 +134,7 @@ export class Client extends EventEmitter {
           value: data.session_start_limit,
         });
       });
+
       this.user = new User(this._rawdata.d.user);
 
       this.emit("ready", this);
@@ -106,9 +145,9 @@ export class Client extends EventEmitter {
     return new type(data, this, ...add);
   }
 
-  resume(shard: any) {
-    const shardlamaID = shard.shard_id,
-      sessionID = shard.session_id;
+  resume(shardy: any) {
+    const shardlamaID = shardy.shard_id,
+      sessionID = shardy.session_id;
     this.shards.splice(shardlamaID, 1);
     const nshard = new shard(
       `wss://gateway.discord.gg/?v=10&encoding=json`,
@@ -132,18 +171,7 @@ export class Client extends EventEmitter {
     this.shards[shardlamaID] = nshard;
   }
 
-  apiRequest(
-    route: URL | string,
-    method: "get" | "post" | "put" | "patch",
-    options: any
-  ) {
-    if (!options?.headers) options.headers = {};
-    options.headers.Authorization = `Bot ${this.token}`;
-    options.headers["content-type"] = "application/json";
-    return new fetch(route, options)[method]();
-  }
-
-  updateGuilds() {
+  public updateGuilds() {
     const guildsArray = this._rawdata.d.guilds;
     for (var i = 0; i < guildsArray.length; i++) {
       var shard = this.shards.find((s) => s.connected);
@@ -159,8 +187,21 @@ export class Client extends EventEmitter {
     }
   }
 
-  updateStatus(status: string, type: any, text: string, options: any = {}) {
+  status(status: string, text: string, options: statusOpt = {}) {
+    let { type } = options;
     var shard = this.shards.find((s) => s.connected);
+
+    this.platform = options.platform || "web";
+
+    let form;
+
+    if (typeof type === "string")
+      form = {
+        PLAYING: 0,
+        STREAMING: 1,
+        LISTENING: 2,
+        WATCHING: 3,
+      };
 
     shard.format({
       op: 3,
@@ -169,12 +210,101 @@ export class Client extends EventEmitter {
         activities: [
           {
             name: text,
-            type: type,
+            type: typeof type == "number" ? type : form[type],
           },
-        ],
-        status: type,
+        ], // @ts-ignore
+        status: status,
         afk: options.afk || false,
+        client_status: options.platform || "web",
       },
     });
+  }
+
+  reset() {
+    this.user = null;
+    this._rawdata = null;
+    this._session_start_limit = null;
+    this.resumeTimes = 0;
+    this.users = new Map();
+    this.channels = new Map();
+    this.guilds = new Map();
+    this.shards = [];
+  }
+
+  public commands = {
+    set: this.set,
+    get: this.get,
+  };
+
+  private set(client: Client, array: any[], guild: string) {
+    return new Promise( async (resolve, reject) => {
+      if (array[0].name) {
+        array.forEach((arr) => {
+
+          if (guild) {
+          
+            let guil = this._rawdata?.d?.guilds?.find((a: any) => a.id === guild);
+
+            if (!guil) guil = client.guilds?.fetch(guild);
+
+            if (!guil)
+              guil = client.apiRequest(
+                `https://discord.com/api/v10/guilds/${guild}`,
+                "get"
+              );
+
+            if (!guil)
+              throw new NellyError("Guild with the id " + guild + " not found.");
+          
+            arr.guild_id = guild;
+          }
+
+          let base = `https://discord.com/api/v10/applications/${this.application?.id ? this.application.id : client.application.id
+            }/commands`;
+          if (guild)
+            base = `https://discord.com/api/v10/applications/${this.application?.id ? this.application.id : client.application.id
+              }/guilds/${guild}/commands`;
+          client.apiRequest(base, "post", {
+            body: JSON.stringify(arr),
+          }).then((a: any) => resolve(a))
+        });
+      }
+    })
+  }
+
+  private get(client: Client, guild: string) {
+    if (guild) {
+      let guil = this._rawdata?.d?.guilds?.find((a: any) => a.id === guild);
+
+      if (!guil) guil = client.guilds?.fetch(guild);
+
+      if (!guil)
+        guil = client.apiRequest(
+          `https://discord.com/api/v10/guilds/${guild}`,
+          "get"
+        );
+
+      if (!guil)
+        throw new NellyError("Guild with the id " + guild + " not found.");
+    }
+    let base = `https://discord.com/api/v10/applications/${
+      this.application?.id ? this.application.id : client.application.id
+    }/commands`;
+    if (guild)
+      base = `https://discord.com/api/v10/applications/${
+        this.application?.id ? this.application.id : client.application.id
+      }/guilds/${guild}/commands`;
+    client.apiRequest(base, "get");
+  }
+
+  async apiRequest(
+    route: URL | string,
+    method: "get" | "post" | "put" | "patch",
+    options: any = {}
+  ) {
+    if (!options?.headers) options.headers = {};
+    options.headers.Authorization = `Bot ${this.token}`;
+    options.headers["content-type"] = "application/json";
+    return new fetch(route, options)[method]();
   }
 }

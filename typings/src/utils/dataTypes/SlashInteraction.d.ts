@@ -1,39 +1,34 @@
-import { Member } from './User';
+import { Member } from "./User";
 declare type msgSend = {
     content: string;
     components: any[];
     embeds: any[];
     referenced_message: any;
 };
-declare type messageOptions = {
-    msg?: any;
+declare type interactionOptions = {
+    interaction?: any;
     channel?: any;
     guild?: any;
-    author?: any;
+    member?: any;
 };
-export declare class mentions {
-    users: any;
-    roles: any;
-    everyone: any;
-    constructor(d: any, client: any);
-}
-export declare class BaseMessage {
+export declare class BaseSlash {
     content: string;
     tts: any;
     timeStamp: Date;
     pin: any;
-    mentions: mentions;
     member: Member;
     author: any;
     channel: any;
     repli: any;
     guild: any;
     _client: any;
-    msg: any;
-    constructor(options: messageOptions, client: any);
+    interaction: any;
+    id?: any;
+    constructor(options: interactionOptions, client: any);
     get _channelLink(): string;
     toString(): string;
     get client(): any;
     reply(text: string | msgSend, options: msgSend): Promise<unknown>;
+    followUp(): Promise<unknown>;
 }
 export {};

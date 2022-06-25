@@ -1,6 +1,18 @@
 import { Member } from './User'
 
+type msgSend = {
+  content: string;
+  components: any[];
+  embeds: any[];
+  referenced_message: any
+};
 
+type messageOptions = {
+  msg?: any;
+  channel?: any;
+  guild?: any;
+  author?: any;
+}
 export class mentions {
   users: any;
   roles: any;
@@ -12,8 +24,8 @@ export class mentions {
   }
 }
 
-export class BaseMessage extends String {
-  content: any;
+export class BaseMessage {
+  content: string;
   tts: any;
   timeStamp: Date;
   pin: any;
@@ -21,12 +33,15 @@ export class BaseMessage extends String {
   member: Member;
   author: any;
   channel: any;
-  reply: any;
+  repli: any;
   guild: any;
+  _client: any;
+  msg: any;
 
-  constructor(options: any = {}, client: any) {
-    let { msg, channel, guild, author } = options
-    super(msg.content);
+  constructor(options: messageOptions = {}, client: any) {
+    let { msg, channel, guild, author } = options;
+    this.msg = msg
+    this._client = client;
     this.content = msg.content;
     this.tts = msg.tts;
     this.timeStamp = new Date(msg.timestamp);
@@ -42,12 +57,49 @@ export class BaseMessage extends String {
     this.member = new Member({ msg, author });
     this.author = this.member.user;
     this.channel = channel;
-    this.reply = msg.referenced_message;
+    this.repli = msg.referenced_message;
     this.guild = guild;
     this.member.guild = this.guild;
   }
 
+  get _channelLink() {
+    return `https://discord.com/api/v10/channels/${this.channel.id}`;
+  }
+
   toString() {
     return this.content;
+  }
+
+  get client() {
+    return this._client;
+  }
+
+  reply(text: string | msgSend, options: msgSend) {
+    const link = this._channelLink + "/messages";
+
+    if (typeof text != 'string') {
+      text.referenced_message = this.msg;
+    }
+    const data =
+      typeof text == "string"
+        ? {
+            content: text,
+            ...options,
+            referenced_message: this.msg
+          }
+        : text;
+
+    return new Promise((resolve, reject) => {
+      this.client
+        .apiRequest(link, "post", {
+          body: JSON.stringify(data),
+        })
+        .then((r: any) => {
+          resolve(r);
+        })
+        .catch((err: any) => {
+          reject(err);
+        });
+    });
   }
 }

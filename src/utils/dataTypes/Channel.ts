@@ -55,7 +55,7 @@ export class TextChannel extends BaseChannel {
     this.pinTime = new Date(obj.last_pin_timestamp);
   }
 
-  send(text: string | object, options: msgSend) {
+  send(text: string | msgSend, options: msgSend) {
     const link = this._channelLink + "/messages";
 
     const data =
@@ -65,6 +65,14 @@ export class TextChannel extends BaseChannel {
             ...options,
           }
         : text;
+
+    if (data.embeds) {
+      if (!Array.isArray(data.embeds)) data.embeds = [data.embeds];
+    }
+
+    if (data.components) {
+      if (!Array.isArray(data.components)) data.components = [data.components];
+    }
 
     return new Promise((resolve, reject) => {
       this.client
