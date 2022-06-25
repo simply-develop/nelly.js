@@ -1,5 +1,7 @@
 node_modules/
 lib/
+typings/
 
-# Other
-./test.js
+**/*.tgz
+/test.js
+nelly.ts

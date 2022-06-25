@@ -1,6 +1,6 @@
-src
-clyde.ts
+src/
+nelly.ts
 .gitignore
-node_modules
+node_modules/
 tsconfig.json
-test.js
+/test.js
